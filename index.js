@@ -18,7 +18,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
-app.use(express.static('service'));
+
+
+app.use(express.static('review'));
 app.use(fileUpload());
 
 
@@ -41,7 +43,7 @@ client.connect(err => {
     const servicesCollection = client.db("creativeEgency").collection("services");
     const adminCollection = client.db("creativeEgency").collection("userAdmin");
     const orderedCollection = client.db("creativeEgency").collection("ordered");
-    const reviewCollection = client.db("creativeEgency").collection("review");
+    const reviewCollection = client.db("creativeEgency").collection("reviews");
 
     // add services
     app.post('/addAService', (req, res) => {
@@ -63,21 +65,20 @@ client.connect(err => {
     })
 
     //add customer review 
-    app.post('/addReview', (req, res) => {
+    app.post('/addAReview', (req, res) => {
         const file = req.files.file;
         const name = req.body.name;
         const description = req.body.description;
         const designation = req.body.designation;
-        console.log(file, name, description, designation)
-        const newImg = req.files.file.data;
-        const encImg = newImg.toString('base64');
 
+        const newImg = file.data;
+        const encImg = newImg.toString('base64');
         var image = {
-            contentType: req.files.file.mimetype,
-            size: req.files.file.size,
+            contentType: file.mimetype,
+            size: file.size,
             img: Buffer.from(encImg, 'base64')
-        }
-        reviewCollection.insertOne({ name, description, designation, image })
+        };
+        reviewCollection.insertOne({ name, designation, description, image })
             .then(result => {
                 res.send(result.insertedCount > 0)
             })
@@ -91,7 +92,7 @@ client.connect(err => {
     })
 
     app.get('/service', (req, res) => {
-        servicesCollection.find({}).limit(6)
+        servicesCollection.find({})
             .toArray((err, documents) => {
                 res.send(documents);
             })
